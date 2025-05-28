@@ -8,6 +8,7 @@ import EventDetailsPage from '@/pages/EventDetailsPage.jsx';
 import AdminDashboardPage from '@/pages/AdminDashboardPage.jsx';
 import NotFoundPage from '@/pages/NotFoundPage.jsx';
 import SignInPage from '@/pages/SignInPage.jsx';
+import SignUpPage from '@/pages/SignUpPage.jsx';
 import { EventProvider } from '@/contexts/EventContext.jsx';
 
 function App() {
@@ -29,7 +30,8 @@ function App() {
       <Router>
         <Routes>
           <Route path="/sign-in" element={<SignInPage />} />
-          
+          <Route path="/sign-up" element={<SignUpPage />} />
+
           <Route path="/" element={
             <ProtectedRoute>
               <Layout />

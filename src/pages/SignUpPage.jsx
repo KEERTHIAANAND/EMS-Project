@@ -4,40 +4,47 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label.jsx';
 import { motion } from 'framer-motion';
-import { LogIn, AtSign, KeyRound } from 'lucide-react';
+import { UserPlus, AtSign, KeyRound, User } from 'lucide-react';
 
-const SignInPage = () => {
+const SignUpPage = () => {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
+    
     // Basic validation
-    if (!email || !password) {
+    if (!name || !email || !password || !confirmPassword) {
       alert('Please fill in all fields');
       return;
     }
-
-    // Get stored user data (in a real app, you'd validate against a server)
-    const storedUserData = localStorage.getItem('userData');
-
-    if (storedUserData) {
-      const userData = JSON.parse(storedUserData);
-
-      // Check credentials
-      if (userData.email === email && userData.password === password) {
-        // Set authentication status
-        localStorage.setItem('isAuthenticated', 'true');
-        navigate('/');
-      } else {
-        alert('Invalid email or password');
-      }
-    } else {
-      // No user registered yet
-      alert('No account found. Please sign up first.');
+    
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
     }
+    
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
+    
+    // Store user data in localStorage (in a real app, you'd send this to a server)
+    const userData = {
+      name,
+      email,
+      password // In a real app, never store plain text passwords!
+    };
+    
+    // Store user data
+    localStorage.setItem('userData', JSON.stringify(userData));
+    localStorage.setItem('isAuthenticated', 'true');
+    
+    // Redirect to home page
+    navigate('/');
   };
 
   return (
@@ -49,16 +56,32 @@ const SignInPage = () => {
         className="w-full max-w-md p-8 rounded-lg glassmorphic"
       >
         <div className="text-center mb-8">
-          <LogIn className="h-12 w-12 mx-auto text-primary mb-4" />
+          <UserPlus className="h-12 w-12 mx-auto text-primary mb-4" />
           <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-            Sign In
+            Sign Up
           </h1>
           <p className="text-muted-foreground mt-2">
-            Welcome back to EventHorizon
+            Join EventHorizon today
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your full name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="pl-10"
+                required
+              />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
@@ -76,12 +99,7 @@ const SignInPage = () => {
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link to="/forgot-password" className="text-sm text-primary hover:underline">
-                Forgot password?
-              </Link>
-            </div>
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <KeyRound className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
               <Input
@@ -92,20 +110,38 @@ const SignInPage = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="pl-10"
                 required
+                minLength={6}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <div className="relative">
+              <KeyRound className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pl-10"
+                required
+                minLength={6}
               />
             </div>
           </div>
 
           <Button type="submit" className="w-full" variant="premium">
-            Sign In
+            Create Account
           </Button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{' '}
-            <Link to="/sign-up" className="text-primary hover:underline">
-              Sign up
+            Already have an account?{' '}
+            <Link to="/sign-in" className="text-primary hover:underline">
+              Sign in
             </Link>
           </p>
         </div>
@@ -114,4 +150,4 @@ const SignInPage = () => {
   );
 };
 
-export default SignInPage;
+export default SignUpPage;

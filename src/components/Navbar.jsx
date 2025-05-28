@@ -1,11 +1,19 @@
 
     import React from 'react';
-    import { Link, NavLink } from 'react-router-dom';
+    import { Link, NavLink, useNavigate } from 'react-router-dom';
     import { Button } from '@/components/ui/button.jsx';
-    import { CalendarDays, PlusCircle, LayoutDashboard } from 'lucide-react';
+    import { CalendarDays, PlusCircle, LayoutDashboard, LogOut } from 'lucide-react';
     import { motion } from 'framer-motion';
 
     const Navbar = () => {
+      const navigate = useNavigate();
+
+      const handleLogout = () => {
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('userData');
+        navigate('/sign-in');
+      };
+
       const navLinkClasses = ({ isActive }) =>
         `flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out
         ${isActive
@@ -14,7 +22,7 @@
         }`;
 
       return (
-        <motion.nav 
+        <motion.nav
           initial={{ y: -100 }}
           animate={{ y: 0 }}
           transition={{ type: 'spring', stiffness: 120, damping: 20 }}
@@ -45,6 +53,10 @@
                     Create Event
                   </Link>
                 </Button>
+                <Button onClick={handleLogout} variant="outline" size="sm">
+                  <LogOut className="h-5 w-5 mr-2" />
+                  Logout
+                </Button>
               </div>
               <div className="md:hidden">
                 {/* Mobile menu button can be added here */}
@@ -61,4 +73,3 @@
     };
 
     export default Navbar;
-  
