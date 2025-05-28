@@ -1,0 +1,79 @@
+
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+
+    @layer base {
+      :root {
+        --background: 224 71.4% 4.1%; /* Dark Blue-Gray */
+        --foreground: 210 20% 98%; /* Almost White */
+
+        --card: 224 71.4% 4.1%;
+        --card-foreground: 210 20% 98%;
+
+        --popover: 224 71.4% 4.1%;
+        --popover-foreground: 210 20% 98%;
+
+        --primary: 262.1 83.3% 57.8%; /* Vibrant Purple */
+        --primary-foreground: 210 20% 98%;
+
+        --secondary: 220 14.3% 95.9%; /* Light Gray */
+        --secondary-foreground: 220.9 39.3% 11%; /* Dark Blue-Gray */
+
+        --muted: 220 14.3% 95.9%;
+        --muted-foreground: 220 8.9% 46.1%;
+
+        --accent: 300 80% 60%; /* Bright Pink/Magenta */
+        --accent-foreground: 210 20% 98%;
+
+        --destructive: 0 72.2% 50.6%; /* Red */
+        --destructive-foreground: 210 20% 98%;
+
+        --border: 215 27.9% 16.9%; /* Darker Blue-Gray for borders */
+        --input: 215 27.9% 16.9%;
+        --ring: 262.1 83.3% 57.8%; /* Vibrant Purple for focus rings */
+
+        --radius: 0.75rem;
+      }
+
+      .dark {
+        /* You can define dark theme variables here if needed, but current setup is dark by default */
+      }
+    }
+
+    @layer base {
+      * {
+        @apply border-border;
+      }
+      body {
+        @apply bg-background text-foreground;
+        font-feature-settings: "rlig" 1, "calt" 1;
+      }
+    }
+
+    /* Custom scrollbar for a more modern look */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: hsl(var(--background) / 0.5);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: hsl(var(--primary) / 0.7);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: hsl(var(--primary));
+    }
+
+    /* Glassmorphism effect class */
+    .glassmorphic {
+      background: rgba(255, 255, 255, 0.05); /* Adjust alpha for more/less transparency */
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px); /* For Safari */
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+  
