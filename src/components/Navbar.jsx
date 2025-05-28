@@ -8,10 +8,28 @@
     const Navbar = () => {
       const navigate = useNavigate();
 
-      const handleLogout = () => {
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('userData');
-        navigate('/sign-in');
+      const handleLogout = async () => {
+        try {
+          // Call Django logout endpoint
+          const token = localStorage.getItem('token');
+          if (token) {
+            await fetch('http://localhost:8000/api/auth/logout/', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              }
+            });
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
+        } finally {
+          // Clear local storage regardless of API call result
+          localStorage.removeItem('isAuthenticated');
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/sign-in');
+        }
       };
 
       const navLinkClasses = ({ isActive }) =>

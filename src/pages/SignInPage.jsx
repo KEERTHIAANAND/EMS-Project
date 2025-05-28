@@ -4,39 +4,65 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label.jsx';
 import { motion } from 'framer-motion';
-import { LogIn, AtSign, KeyRound } from 'lucide-react';
+import { LogIn, AtSign, KeyRound, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 const SignInPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage({ type: '', text: '' });
 
     // Basic validation
     if (!email || !password) {
-      alert('Please fill in all fields');
+      setMessage({ type: 'error', text: 'Please fill in all fields' });
       return;
     }
 
-    // Get stored user data (in a real app, you'd validate against a server)
-    const storedUserData = localStorage.getItem('userData');
+    setLoading(true);
 
-    if (storedUserData) {
-      const userData = JSON.parse(storedUserData);
+    try {
+      // Send login data to Django backend
+      const response = await fetch('http://localhost:8000/api/auth/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password
+        })
+      });
 
-      // Check credentials
-      if (userData.email === email && userData.password === password) {
-        // Set authentication status
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store JWT token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('isAuthenticated', 'true');
-        navigate('/');
+
+        setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
+
+        // Redirect after a short delay to show success message
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
       } else {
-        alert('Invalid email or password');
+        setMessage({ type: 'error', text: data.error || 'Login failed' });
       }
-    } else {
-      // No user registered yet
-      alert('No account found. Please sign up first.');
+    } catch (error) {
+      console.error('Login error:', error);
+      setMessage({
+        type: 'error',
+        text: 'Network error. Please make sure the backend server is running.'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -57,6 +83,26 @@ const SignInPage = () => {
             Welcome back to EventHorizon
           </p>
         </div>
+
+        {/* Message Display */}
+        {message.text && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
+              message.type === 'success'
+                ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                : 'bg-red-500/10 border border-red-500/20 text-red-400'
+            }`}
+          >
+            {message.type === 'success' ? (
+              <CheckCircle className="h-5 w-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            )}
+            <span className="text-sm">{message.text}</span>
+          </motion.div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
@@ -96,8 +142,15 @@ const SignInPage = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" variant="premium">
-            Sign In
+          <Button type="submit" className="w-full" variant="premium" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              'Sign In'
+            )}
           </Button>
         </form>
 

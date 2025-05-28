@@ -4,47 +4,80 @@ import { Button } from '@/components/ui/button.jsx';
 import { Input } from '@/components/ui/input.jsx';
 import { Label } from '@/components/ui/label.jsx';
 import { motion } from 'framer-motion';
-import { UserPlus, AtSign, KeyRound, User } from 'lucide-react';
+import { UserPlus, AtSign, KeyRound, User, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 const SignUpPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+    setMessage({ type: '', text: '' });
+
     // Basic validation
     if (!name || !email || !password || !confirmPassword) {
-      alert('Please fill in all fields');
+      setMessage({ type: 'error', text: 'Please fill in all fields' });
       return;
     }
-    
+
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      setMessage({ type: 'error', text: 'Passwords do not match' });
       return;
     }
-    
+
     if (password.length < 6) {
-      alert('Password must be at least 6 characters long');
+      setMessage({ type: 'error', text: 'Password must be at least 6 characters long' });
       return;
     }
-    
-    // Store user data in localStorage (in a real app, you'd send this to a server)
-    const userData = {
-      name,
-      email,
-      password // In a real app, never store plain text passwords!
-    };
-    
-    // Store user data
-    localStorage.setItem('userData', JSON.stringify(userData));
-    localStorage.setItem('isAuthenticated', 'true');
-    
-    // Redirect to home page
-    navigate('/');
+
+    setLoading(true);
+
+    try {
+      // Send registration data to Django backend
+      const response = await fetch('http://localhost:8000/api/auth/register/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          password: password,
+          confirm_password: confirmPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Store JWT token and user data
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('isAuthenticated', 'true');
+
+        setMessage({ type: 'success', text: 'Registration successful! Redirecting...' });
+
+        // Redirect after a short delay to show success message
+        setTimeout(() => {
+          navigate('/');
+        }, 1500);
+      } else {
+        setMessage({ type: 'error', text: data.error || 'Registration failed' });
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      setMessage({
+        type: 'error',
+        text: 'Network error. Please make sure the backend server is running.'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,6 +97,26 @@ const SignUpPage = () => {
             Join EventHorizon today
           </p>
         </div>
+
+        {/* Message Display */}
+        {message.text && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
+              message.type === 'success'
+                ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                : 'bg-red-500/10 border border-red-500/20 text-red-400'
+            }`}
+          >
+            {message.type === 'success' ? (
+              <CheckCircle className="h-5 w-5 flex-shrink-0" />
+            ) : (
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            )}
+            <span className="text-sm">{message.text}</span>
+          </motion.div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
@@ -132,8 +185,15 @@ const SignUpPage = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full" variant="premium">
-            Create Account
+          <Button type="submit" className="w-full" variant="premium" disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              'Create Account'
+            )}
           </Button>
         </form>
 
