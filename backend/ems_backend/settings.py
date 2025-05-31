@@ -85,28 +85,35 @@ MONGODB_DB_NAME = config('MONGODB_DB_NAME', default='ems_database')
 # Connect to MongoDB Atlas with improved settings
 if mongoengine:
     try:
+        # Disconnect any existing connections first
+        mongoengine.disconnect()
+
         mongoengine.connect(
             db=MONGODB_DB_NAME,
             host=MONGODB_URI,
             alias='default',
             # Connection pool settings
-            maxPoolSize=50,
-            minPoolSize=5,
-            # Timeout settings (in milliseconds)
-            serverSelectionTimeoutMS=5000,  # 5 seconds
-            socketTimeoutMS=10000,  # 10 seconds
-            connectTimeoutMS=10000,  # 10 seconds
+            maxPoolSize=10,
+            minPoolSize=1,
+            # Increased timeout settings (in milliseconds)
+            serverSelectionTimeoutMS=30000,  # 30 seconds
+            socketTimeoutMS=30000,  # 30 seconds
+            connectTimeoutMS=30000,  # 30 seconds
             # Retry settings
             retryWrites=True,
             retryReads=True,
             # Other settings
-            maxIdleTimeMS=30000,  # 30 seconds
-            heartbeatFrequencyMS=10000,  # 10 seconds
+            maxIdleTimeMS=60000,  # 60 seconds
+            heartbeatFrequencyMS=30000,  # 30 seconds
+            # Additional settings for better connectivity
+            directConnection=False,
+            readPreference='primary',
         )
         print("✓ Successfully connected to MongoDB Atlas")
     except Exception as e:
         print(f"⚠️  MongoDB Atlas connection failed: {e}")
-        print("   Please check your MongoDB Atlas configuration in .env file")
+        print("   Please check your MongoDB Atlas configuration and network access")
+        print("   Make sure your IP is whitelisted in MongoDB Atlas Network Access")
 
 # Since we're using MongoDB, we'll use a dummy database for Django's requirements
 DATABASES = {

@@ -10,10 +10,10 @@
     import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card.jsx';
     import { DatePicker } from '@/components/DatePicker.jsx';
     import { useToast } from '@/components/ui/use-toast.jsx';
-    import { CalendarPlus, Save, ArrowLeft } from 'lucide-react';
+    import { CalendarPlus, Save, ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 
     const EventForm = ({ isEditMode = false }) => {
-      const { addEvent, getEventById, updateEvent } = useEvents();
+      const { addEvent, getEventById, updateEvent, loading } = useEvents();
       const navigate = useNavigate();
       const { eventId } = useParams();
       const { toast } = useToast();
@@ -24,6 +24,8 @@
       const [eventLocation, setEventLocation] = useState('');
       const [eventDescription, setEventDescription] = useState('');
       const [eventImage, setEventImage] = useState('');
+      const [submitting, setSubmitting] = useState(false);
+      const [message, setMessage] = useState({ type: '', text: '' });
 
       useEffect(() => {
         if (isEditMode && eventId) {
@@ -41,21 +43,30 @@
               description: "Event not found.",
               variant: "destructive",
             });
-            navigate('/admin'); 
+            navigate('/admin');
           }
         }
       }, [isEditMode, eventId, getEventById, navigate, toast]);
 
-      const handleSubmit = (e) => {
+      const handleSubmit = async (e) => {
         e.preventDefault();
+        setMessage({ type: '', text: '' });
+
+        // Basic validation
         if (!eventName || !eventDate || !eventTime || !eventLocation || !eventDescription) {
-          toast({
-            title: "Missing Information",
-            description: "Please fill in all required fields.",
-            variant: "destructive",
-          });
+          setMessage({ type: 'error', text: 'Please fill in all required fields.' });
           return;
         }
+
+        // Check authentication
+        const token = localStorage.getItem('token');
+        const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+        if (!token || !isAuth) {
+          setMessage({ type: 'error', text: 'Please login to create events.' });
+          return;
+        }
+
+        setSubmitting(true);
 
         const eventData = {
           name: eventName,
@@ -66,12 +77,31 @@
           image: eventImage, // Store image URL
         };
 
-        if (isEditMode && eventId) {
-          updateEvent({ ...eventData, id: eventId });
-          navigate(`/events/${eventId}`);
-        } else {
-          addEvent(eventData);
-          navigate('/');
+        try {
+          if (isEditMode && eventId) {
+            updateEvent({ ...eventData, id: eventId });
+            navigate(`/events/${eventId}`);
+          } else {
+            // Call the async addEvent function
+            const success = await addEvent(eventData);
+
+            if (success) {
+              // The success message comes from the backend response
+              setMessage({ type: 'success', text: 'Event created successfully! Redirecting...' });
+
+              // Redirect after showing success message
+              setTimeout(() => {
+                navigate('/');
+              }, 1500);
+            } else {
+              setMessage({ type: 'error', text: 'Failed to create event. Please try again.' });
+            }
+          }
+        } catch (error) {
+          console.error('Error creating event:', error);
+          setMessage({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
+        } finally {
+          setSubmitting(false);
         }
       };
 
@@ -98,6 +128,26 @@
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {/* Message Display */}
+              {message.text && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`p-4 rounded-lg mb-6 flex items-center gap-3 ${
+                    message.type === 'success'
+                      ? 'bg-green-500/10 border border-green-500/20 text-green-400'
+                      : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                  }`}
+                >
+                  {message.type === 'success' ? (
+                    <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                  )}
+                  <span className="text-sm">{message.text}</span>
+                </motion.div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="eventName" className="text-foreground/90">Event Name</Label>
@@ -140,7 +190,7 @@
                     className="bg-background/70"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="eventImage" className="text-foreground/90">Image URL (Optional)</Label>
                   <Input
@@ -165,9 +215,18 @@
                   />
                 </div>
 
-                <Button type="submit" className="w-full" variant="premium">
-                  <Save className="h-5 w-5 mr-2" />
-                  {isEditMode ? 'Save Changes' : 'Create Event'}
+                <Button type="submit" className="w-full" variant="premium" disabled={submitting || loading}>
+                  {submitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isEditMode ? 'Saving Changes...' : 'Creating Event...'}
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-5 w-5 mr-2" />
+                      {isEditMode ? 'Save Changes' : 'Create Event'}
+                    </>
+                  )}
                 </Button>
               </form>
             </CardContent>
@@ -177,4 +236,3 @@
     };
 
     export default EventForm;
-  

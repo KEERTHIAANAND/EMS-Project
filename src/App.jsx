@@ -12,9 +12,40 @@ import SignUpPage from '@/pages/SignUpPage.jsx';
 import { EventProvider } from '@/contexts/EventContext.jsx';
 
 function App() {
-  // Simple auth check - replace with your actual auth logic
+  // Enhanced auth check with token validation
   const isAuthenticated = () => {
-    return localStorage.getItem('isAuthenticated') === 'true';
+    const token = localStorage.getItem('token');
+    const isAuth = localStorage.getItem('isAuthenticated') === 'true';
+    const user = localStorage.getItem('user');
+
+    // Check if all required auth data exists
+    if (!token || !isAuth || !user) {
+      // Clear any partial auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user');
+      return false;
+    }
+
+    try {
+      // Validate user data
+      const userData = JSON.parse(user);
+      if (!userData.email || !userData.id) {
+        // Invalid user data
+        localStorage.removeItem('token');
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('user');
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      // Invalid JSON in user data
+      localStorage.removeItem('token');
+      localStorage.removeItem('isAuthenticated');
+      localStorage.removeItem('user');
+      return false;
+    }
   };
 
   // Protected route component

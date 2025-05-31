@@ -13,7 +13,7 @@ FALLBACK_USERS_FILE = Path(__file__).parent / 'fallback_users.json'
 
 class FallbackUser:
     """Simple user class for fallback storage"""
-    
+
     def __init__(self, name, email, password_hash=None, user_id=None):
         self.id = user_id or self._generate_id()
         self.name = name
@@ -23,18 +23,18 @@ class FallbackUser:
         self.is_admin = False
         self.created_at = datetime.utcnow().isoformat()
         self.updated_at = datetime.utcnow().isoformat()
-    
+
     def _generate_id(self):
         """Generate a simple ID"""
         import uuid
         return str(uuid.uuid4())
-    
+
     def set_password(self, password):
         """Hash and set password"""
         password_bytes = password.encode('utf-8')
         salt = bcrypt.gensalt()
         self.password_hash = bcrypt.hashpw(password_bytes, salt).decode('utf-8')
-    
+
     def check_password(self, password):
         """Check if password is correct"""
         if not self.password_hash:
@@ -42,7 +42,17 @@ class FallbackUser:
         password_bytes = password.encode('utf-8')
         hash_bytes = self.password_hash.encode('utf-8')
         return bcrypt.checkpw(password_bytes, hash_bytes)
-    
+
+    @property
+    def is_authenticated(self):
+        """Always return True for authenticated users"""
+        return True
+
+    @property
+    def is_anonymous(self):
+        """Always return False for authenticated users"""
+        return False
+
     def to_dict(self):
         """Convert to dictionary"""
         return {
@@ -54,11 +64,11 @@ class FallbackUser:
             'created_at': self.created_at,
             'updated_at': self.updated_at
         }
-    
+
     def save(self):
         """Save user to fallback storage"""
         users = load_fallback_users()
-        
+
         # Update existing user or add new one
         user_found = False
         for i, user_data in enumerate(users):
@@ -67,19 +77,19 @@ class FallbackUser:
                 users[i]['password_hash'] = self.password_hash
                 user_found = True
                 break
-        
+
         if not user_found:
             user_data = self.to_dict()
             user_data['password_hash'] = self.password_hash
             users.append(user_data)
-        
+
         save_fallback_users(users)
 
 def load_fallback_users():
     """Load users from fallback storage"""
     if not FALLBACK_USERS_FILE.exists():
         return []
-    
+
     try:
         with open(FALLBACK_USERS_FILE, 'r') as f:
             return json.load(f)
@@ -92,7 +102,7 @@ def save_fallback_users(users):
     try:
         # Ensure directory exists
         FALLBACK_USERS_FILE.parent.mkdir(exist_ok=True)
-        
+
         with open(FALLBACK_USERS_FILE, 'w') as f:
             json.dump(users, f, indent=2)
     except Exception as e:
@@ -116,18 +126,36 @@ def find_user_by_email(email):
             return user
     return None
 
+def find_user_by_id(user_id):
+    """Find user by ID in fallback storage"""
+    users = load_fallback_users()
+    for user_data in users:
+        if user_data.get('id') == user_id:
+            user = FallbackUser(
+                name=user_data['name'],
+                email=user_data['email'],
+                password_hash=user_data.get('password_hash'),
+                user_id=user_data['id']
+            )
+            user.is_active = user_data.get('is_active', True)
+            user.is_admin = user_data.get('is_admin', False)
+            user.created_at = user_data.get('created_at')
+            user.updated_at = user_data.get('updated_at')
+            return user
+    return None
+
 def create_fallback_user(name, email, password):
     """Create a new user in fallback storage"""
     # Check if user already exists
     existing_user = find_user_by_email(email)
     if existing_user:
         raise ValueError("User with this email already exists")
-    
+
     # Create new user
     user = FallbackUser(name=name, email=email)
     user.set_password(password)
     user.save()
-    
+
     return user
 
 def authenticate_fallback_user(email, password):
@@ -140,13 +168,17 @@ def authenticate_fallback_user(email, password):
 def is_mongodb_available():
     """Check if MongoDB is available"""
     try:
-        import mongoengine
         from authentication.models import User
-        
-        # Try a simple query with a very short timeout
+        import mongoengine
+
+        # Test basic connection by trying to count documents
+        # This is a lightweight operation that will fail quickly if MongoDB is unavailable
         User.objects.count()
         return True
-    except Exception:
+
+    except Exception as e:
+        # MongoDB is not available, use fallback storage
+        print(f"MongoDB not available, using fallback storage: {e}")
         return False
 
 def cleanup_fallback_storage():

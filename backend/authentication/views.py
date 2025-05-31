@@ -43,73 +43,82 @@ def register(request):
                 'error': 'Password must be at least 6 characters long'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Try MongoDB first (force MongoDB usage)
+        # Always try fallback first for reliability, then try MongoDB
         try:
-            existing_user = User.objects(email=email).first()
+            # Check if user already exists in fallback
+            existing_user = find_user_by_email(email)
             if existing_user:
                 return Response({
                     'error': 'User with this email already exists'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create new user in MongoDB
-            user = User(
-                name=name,
-                email=email
-            )
-            user.set_password(password)
-            user.save()
-
-            # Generate JWT token
-            token = generate_jwt_token(user)
-
-            return Response({
-                'message': 'User registered successfully in MongoDB Atlas',
-                'user': user.to_dict(),
-                'token': token
-            }, status=status.HTTP_201_CREATED)
-
-        except Exception as db_error:
-            print(f"MongoDB error during registration: {db_error}")
-
-            # Check if it's a connection issue
-            import pymongo.errors
-            if isinstance(db_error, (pymongo.errors.ServerSelectionTimeoutError,
-                                   pymongo.errors.NetworkTimeout,
-                                   pymongo.errors.ConnectionFailure)):
-                return Response({
-                    'error': 'Cannot connect to database. Please check MongoDB Atlas network settings and try again.'
-                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-            # For other MongoDB errors, use fallback
+            # Try to save in MongoDB first
             try:
-                # Check if user already exists in fallback
-                existing_user = find_user_by_email(email)
-                if existing_user:
+                if is_mongodb_available():
+                    # Check if user exists in MongoDB
+                    existing_mongo_user = User.objects(email=email).first()
+                    if existing_mongo_user:
+                        return Response({
+                            'error': 'User with this email already exists'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                    # Create new user in MongoDB Atlas
+                    mongo_user = User(
+                        name=name,
+                        email=email
+                    )
+                    mongo_user.set_password(password)
+                    mongo_user.save()
+
+                    # Generate JWT token
+                    token = generate_jwt_token(mongo_user)
+
+                    print(f"User successfully saved to MongoDB Atlas: {email}")
+
                     return Response({
-                        'error': 'User with this email already exists'
-                    }, status=status.HTTP_400_BAD_REQUEST)
+                        'message': 'User registered successfully! Stored in MongoDB Atlas',
+                        'user': {
+                            'id': str(mongo_user.id),
+                            'name': mongo_user.name,
+                            'email': mongo_user.email,
+                            'is_active': mongo_user.is_active,
+                            'is_admin': mongo_user.is_admin
+                        },
+                        'token': token,
+                        'storage': 'MongoDB Atlas',
+                        'mongodb_saved': True
+                    }, status=status.HTTP_201_CREATED)
 
-                # Create user in fallback storage
-                user = create_fallback_user(name, email, password)
+                else:
+                    # MongoDB not available, use fallback storage
+                    user = create_fallback_user(name, email, password)
+                    token = generate_jwt_token(user)
 
-                # Generate JWT token
-                token = generate_jwt_token(user)
+                    print(f"User saved to fallback storage (MongoDB unavailable): {email}")
 
-                return Response({
-                    'message': 'User registered successfully (MongoDB unavailable, using temporary storage)',
-                    'user': user.to_dict(),
-                    'token': token
-                }, status=status.HTTP_201_CREATED)
+                    return Response({
+                        'message': 'User registered successfully! Stored in fallback storage',
+                        'user': user.to_dict(),
+                        'token': token,
+                        'storage': 'Fallback Storage (MongoDB unavailable)',
+                        'mongodb_saved': False
+                    }, status=status.HTTP_201_CREATED)
 
-            except ValueError as e:
-                return Response({
-                    'error': str(e)
-                }, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                print(f"Fallback registration error: {e}")
+            except Exception as creation_error:
+                print(f"User creation error: {creation_error}")
                 return Response({
                     'error': 'Registration failed. Please try again.'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        except ValueError as e:
+            return Response({
+                'error': str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"Registration error: {e}")
+            return Response({
+                'error': 'Registration failed. Please try again.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     except Exception as e:
         print(f"Unexpected registration error: {e}")
@@ -132,75 +141,70 @@ def login(request):
                 'error': 'Email and password are required'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Try MongoDB first (force MongoDB usage)
+        # Try MongoDB authentication first, then fallback
         try:
-            user = User.objects.get(email=email, is_active=True)
-            if not user.check_password(password):
-                return Response({
-                    'error': 'Invalid email or password'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            if is_mongodb_available():
+                # Try to authenticate with MongoDB Atlas
+                try:
+                    mongo_user = User.objects.get(email=email, is_active=True)
+                    if mongo_user.check_password(password):
+                        # Generate JWT token
+                        token = generate_jwt_token(mongo_user)
 
-            # Generate JWT token
-            token = generate_jwt_token(user)
+                        print(f"User successfully authenticated with MongoDB Atlas: {email}")
 
+                        return Response({
+                            'message': 'Login successful - Welcome to EMS! Authenticated with MongoDB Atlas',
+                            'user': {
+                                'id': str(mongo_user.id),
+                                'name': mongo_user.name,
+                                'email': mongo_user.email,
+                                'is_active': mongo_user.is_active,
+                                'is_admin': mongo_user.is_admin
+                            },
+                            'token': token,
+                            'authenticated': True,
+                            'storage': 'MongoDB Atlas',
+                            'mongodb_verified': True
+                        }, status=status.HTTP_200_OK)
+                    else:
+                        return Response({
+                            'error': 'Invalid email or password.'
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
+                except User.DoesNotExist:
+                    return Response({
+                        'error': 'Invalid email or password. Please register first.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+            else:
+                # MongoDB not available, try fallback authentication
+                fallback_user = authenticate_fallback_user(email, password)
+
+                if fallback_user:
+                    # Generate JWT token
+                    token = generate_jwt_token(fallback_user)
+
+                    print(f"User authenticated with fallback storage (MongoDB unavailable): {email}")
+
+                    return Response({
+                        'message': 'Login successful - Welcome to EMS! Authenticated with fallback storage',
+                        'user': fallback_user.to_dict(),
+                        'token': token,
+                        'authenticated': True,
+                        'storage': 'Fallback Storage (MongoDB unavailable)',
+                        'mongodb_verified': False
+                    }, status=status.HTTP_200_OK)
+                else:
+                    return Response({
+                        'error': 'Invalid email or password. Please register first.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as auth_error:
+            print(f"Authentication error: {auth_error}")
             return Response({
-                'message': 'Login successful (using MongoDB Atlas)',
-                'user': user.to_dict(),
-                'token': token
-            }, status=status.HTTP_200_OK)
-
-        except User.DoesNotExist:
-            # User not found in MongoDB, check fallback
-            try:
-                user = authenticate_fallback_user(email, password)
-                if user:
-                    token = generate_jwt_token(user)
-                    return Response({
-                        'message': 'Login successful (using temporary storage)',
-                        'user': user.to_dict(),
-                        'token': token
-                    }, status=status.HTTP_200_OK)
-                else:
-                    return Response({
-                        'error': 'Invalid email or password'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                print(f"Fallback authentication error: {e}")
-                return Response({
-                    'error': 'Invalid email or password'
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        except Exception as db_error:
-            print(f"MongoDB error during login: {db_error}")
-
-            # Check if it's a connection issue
-            import pymongo.errors
-            if isinstance(db_error, (pymongo.errors.ServerSelectionTimeoutError,
-                                   pymongo.errors.NetworkTimeout,
-                                   pymongo.errors.ConnectionFailure)):
-                return Response({
-                    'error': 'Cannot connect to database. Please check MongoDB Atlas network settings and try again.'
-                }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-            # For other errors, try fallback
-            try:
-                user = authenticate_fallback_user(email, password)
-                if user:
-                    token = generate_jwt_token(user)
-                    return Response({
-                        'message': 'Login successful (MongoDB unavailable, using temporary storage)',
-                        'user': user.to_dict(),
-                        'token': token
-                    }, status=status.HTTP_200_OK)
-                else:
-                    return Response({
-                        'error': 'Invalid email or password'
-                    }, status=status.HTTP_400_BAD_REQUEST)
-            except Exception as e:
-                print(f"Fallback authentication error: {e}")
-                return Response({
-                    'error': 'Invalid email or password'
-                }, status=status.HTTP_400_BAD_REQUEST)
+                'error': 'Authentication failed. Please try again.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     except Exception as e:
         print(f"Unexpected login error: {e}")

@@ -41,19 +41,41 @@ const SignInPage = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // Store JWT token and user data
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        localStorage.setItem('isAuthenticated', 'true');
+        // Validate response data
+        if (data.token && data.user && data.authenticated) {
+          // Store JWT token and user data
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          localStorage.setItem('isAuthenticated', 'true');
 
-        setMessage({ type: 'success', text: 'Login successful! Redirecting...' });
+          setMessage({
+            type: 'success',
+            text: data.message || 'Login successful! Redirecting to homepage...'
+          });
 
-        // Redirect after a short delay to show success message
-        setTimeout(() => {
-          navigate('/');
-        }, 1500);
+          // Redirect after a short delay to show success message
+          setTimeout(() => {
+            navigate('/');
+          }, 1500);
+        } else {
+          setMessage({
+            type: 'error',
+            text: 'Invalid response from server. Please try again.'
+          });
+        }
       } else {
-        setMessage({ type: 'error', text: data.error || 'Login failed' });
+        // Handle different error status codes
+        if (response.status === 503) {
+          setMessage({
+            type: 'error',
+            text: 'Database connection failed. Please check your internet connection and try again.'
+          });
+        } else {
+          setMessage({
+            type: 'error',
+            text: data.error || 'Login failed. Please check your credentials.'
+          });
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
