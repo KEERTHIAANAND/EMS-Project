@@ -4,7 +4,7 @@
 
     const Footer = () => {
       return (
-        <motion.footer 
+        <motion.footer
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
@@ -14,11 +14,10 @@
             &copy; {new Date().getFullYear()} EventHorizon. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground/70 mt-1">
-            Powered by Hostinger Horizons
+            Discover Events Beyond the Horizon
           </p>
         </motion.footer>
       );
     };
 
     export default Footer;
-  
