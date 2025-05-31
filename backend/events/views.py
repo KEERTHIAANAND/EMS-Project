@@ -84,6 +84,7 @@ def event_list_create(request):
             date = request.data.get('date')
             time = request.data.get('time')
             location = request.data.get('location')
+            image = request.data.get('image', '')  # Optional image URL
 
             # Basic validation
             if not all([name, description, date, time, location]):
@@ -121,6 +122,7 @@ def event_list_create(request):
                         date=date,
                         time=time,
                         location=location,
+                        image=image,
                         created_by=authenticated_user
                     )
                     mongodb_event.save()
@@ -146,6 +148,7 @@ def event_list_create(request):
                         date=date,
                         time=time,
                         location=location,
+                        image=image,
                         user=authenticated_user
                     )
 
@@ -159,7 +162,9 @@ def event_list_create(request):
                     }, status=status.HTTP_201_CREATED)
 
             except Exception as creation_error:
+                import traceback
                 print(f"Event creation error: {creation_error}")
+                print(f"Traceback: {traceback.format_exc()}")
                 return Response({
                     'error': 'Failed to create event. Please try again later.'
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
