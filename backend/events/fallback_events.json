@@ -1,0 +1,110 @@
+[
+  {
+    "id": "afefe25d-7888-4984-a1b9-6159e4966761",
+    "name": "Fallback Test Event",
+    "description": "Testing event creation with fallback storage",
+    "date": "2025-06-15",
+    "time": "14:00",
+    "location": "Fallback Storage Location",
+    "image": "https://example.com/fallback-test.jpg",
+    "rsvp_count": 0,
+    "rsvps": [],
+    "created_by": {
+      "id": "84e4d6b8-57c7-4057-89c7-034f2f417223",
+      "name": "Fallback Test User",
+      "email": ""
+    },
+    "created_at": "2025-06-02T04:30:22.231028",
+    "updated_at": "2025-06-02T04:30:22.231028"
+  },
+  {
+    "id": "44aed699-728f-4a50-b6b6-43a4fb21b055",
+    "name": "MongoDB Atlas Production Event",
+    "description": "This event is stored directly in MongoDB Atlas cloud database with users and events collections",
+    "date": "2025-06-15",
+    "time": "14:00",
+    "location": "MongoDB Atlas Cloud Database",
+    "image": "https://example.com/mongodb-atlas-event.jpg",
+    "rsvp_count": 0,
+    "rsvps": [],
+    "created_by": {
+      "id": "9619d222-b90e-4706-a266-a18112d93b21",
+      "name": "MongoDB Atlas User",
+      "email": ""
+    },
+    "created_at": "2025-06-02T04:31:56.621215",
+    "updated_at": "2025-06-02T04:31:56.621215"
+  },
+  {
+    "id": "e9ea3625-faa1-4be6-8411-f61dd95a352c",
+    "name": "Clean System Test Event",
+    "description": "Testing the cleaned-up EMS system with proper error handling and MongoDB Atlas storage",
+    "date": "2025-06-25",
+    "time": "16:00",
+    "location": "Error-Free MongoDB Atlas Database",
+    "image": "https://example.com/clean-system-test.jpg",
+    "rsvp_count": 0,
+    "rsvps": [],
+    "created_by": {
+      "id": "858a3881-7584-4ee2-a6a5-25ccf6bdf5ff",
+      "name": "Clean Test User",
+      "email": ""
+    },
+    "created_at": "2025-06-02T05:22:44.103983",
+    "updated_at": "2025-06-02T05:22:44.103983"
+  },
+  {
+    "id": "12ede4c3-ee32-47c8-a0c2-2e3fd15c88b9",
+    "name": "MongoDB Atlas Direct Storage Event",
+    "description": "This event should be stored directly in MongoDB Atlas ems_db database, not in fallback storage",
+    "date": "2025-07-01",
+    "time": "18:00",
+    "location": "MongoDB Atlas ems_db.events Collection",
+    "image": "https://example.com/mongodb-direct-storage.jpg",
+    "rsvp_count": 0,
+    "rsvps": [],
+    "created_by": {
+      "id": "08751adb-9690-40dc-a17c-c77475e261c6",
+      "name": "MongoDB Direct User",
+      "email": ""
+    },
+    "created_at": "2025-06-02T05:29:49.966259",
+    "updated_at": "2025-06-02T05:29:49.966259"
+  },
+  {
+    "id": "a031a46f-fc9f-4faf-8a60-30cf9556046d",
+    "name": "xcvb",
+    "description": "xcvb",
+    "date": "2025-06-04",
+    "time": "01:00",
+    "location": "xcv",
+    "image": "",
+    "rsvp_count": 0,
+    "rsvps": [],
+    "created_by": {
+      "id": "4cb6be7e-a247-4758-93ab-2f31666346b1",
+      "name": "abc",
+      "email": ""
+    },
+    "created_at": "2025-06-02T05:46:47.634606",
+    "updated_at": "2025-06-02T05:46:47.634606"
+  },
+  {
+    "id": "304611b3-0be4-40ec-aff0-476c51b90c6d",
+    "name": "Birthday Special",
+    "description": "Hello!!",
+    "date": "2025-06-04",
+    "time": "01:00",
+    "location": "Coimbatore",
+    "image": "https://media.istockphoto.com/id/1431551851/vector/birthday-cake-vector-background-design-happy-birthday-greeting-text-with-yummy-cake-element.jpg?s=612x612&w=0&k=20&c=T9fLStaaM08x9q0hIFxIURKttIioZun-nQ8KZq-4JTo=",
+    "rsvp_count": 0,
+    "rsvps": [],
+    "created_by": {
+      "id": "1f7bb544-b0fb-41d2-a688-1177b25e8d5d",
+      "name": "ms",
+      "email": ""
+    },
+    "created_at": "2025-06-02T07:23:31.604523",
+    "updated_at": "2025-06-02T07:23:31.604523"
+  }
+]

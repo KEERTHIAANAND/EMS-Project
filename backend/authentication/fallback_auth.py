@@ -178,7 +178,15 @@ def is_mongodb_available():
 
     except Exception as e:
         # MongoDB is not available, use fallback storage
-        print(f"MongoDB not available, using fallback storage: {e}")
+        error_msg = str(e)
+        if "SSL handshake failed" in error_msg:
+            print("MongoDB not available (SSL connection issue), using fallback storage")
+        elif "ServerSelectionTimeoutError" in error_msg:
+            print("MongoDB not available (connection timeout), using fallback storage")
+        elif "ObjectId" in error_msg:
+            print("MongoDB not available (ObjectId validation issue), using fallback storage")
+        else:
+            print(f"MongoDB not available, using fallback storage: {error_msg[:100]}...")
         return False
 
 def cleanup_fallback_storage():

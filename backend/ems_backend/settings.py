@@ -83,7 +83,7 @@ MONGODB_URI = config('MONGODB_URI', default='mongodb://localhost:27017/ems_datab
 MONGODB_DB_NAME = config('MONGODB_DB_NAME', default='ems_database')
 
 # Connect to MongoDB Atlas with improved settings
-if mongoengine:
+if mongoengine and MONGODB_URI and not MONGODB_URI.startswith('mongodb://invalid-host'):
     try:
         # Disconnect any existing connections first
         mongoengine.disconnect()
@@ -95,16 +95,18 @@ if mongoengine:
             # Connection pool settings
             maxPoolSize=10,
             minPoolSize=1,
-            # Increased timeout settings (in milliseconds)
-            serverSelectionTimeoutMS=30000,  # 30 seconds
-            socketTimeoutMS=30000,  # 30 seconds
-            connectTimeoutMS=30000,  # 30 seconds
+            # Reduced timeout settings for faster fallback
+            serverSelectionTimeoutMS=5000,  # 5 seconds
+            socketTimeoutMS=10000,  # 10 seconds
+            connectTimeoutMS=10000,  # 10 seconds
             # Retry settings
             retryWrites=True,
             retryReads=True,
             # Other settings
             maxIdleTimeMS=60000,  # 60 seconds
             heartbeatFrequencyMS=30000,  # 30 seconds
+            # SSL settings for better compatibility
+            ssl=True,
             # Additional settings for better connectivity
             directConnection=False,
             readPreference='primary',
@@ -114,6 +116,8 @@ if mongoengine:
         print(f"⚠️  MongoDB Atlas connection failed: {e}")
         print("   Please check your MongoDB Atlas configuration and network access")
         print("   Make sure your IP is whitelisted in MongoDB Atlas Network Access")
+else:
+    print("⚠️  MongoDB Atlas disabled - using fallback storage only")
 
 # Since we're using MongoDB, we'll use a dummy database for Django's requirements
 DATABASES = {

@@ -12,13 +12,14 @@ FALLBACK_EVENTS_FILE = Path(__file__).parent / 'fallback_events.json'
 class FallbackEvent:
     """Simple event class for fallback storage"""
 
-    def __init__(self, name, description, date, time, location, created_by_id, created_by_name, event_id=None):
+    def __init__(self, name, description, date, time, location, created_by_id, created_by_name, image='', event_id=None):
         self.id = event_id or self._generate_id()
         self.name = name
         self.description = description
         self.date = date
         self.time = time
         self.location = location
+        self.image = image
         self.created_by_id = created_by_id
         self.created_by_name = created_by_name
         self.rsvps = []
@@ -39,6 +40,7 @@ class FallbackEvent:
             'date': self.date,
             'time': self.time,
             'location': self.location,
+            'image': self.image,
             'rsvp_count': len(self.rsvps),
             'rsvps': self.rsvps,
             'created_by': {
@@ -90,7 +92,7 @@ def save_fallback_events(events):
     except Exception as e:
         print(f"Error saving fallback events: {e}")
 
-def create_fallback_event(name, description, date, time, location, user):
+def create_fallback_event(name, description, date, time, location, image='', user=None):
     """Create a new event in fallback storage"""
     try:
         # Create new event
@@ -100,6 +102,7 @@ def create_fallback_event(name, description, date, time, location, user):
             date=date,
             time=time,
             location=location,
+            image=image,
             created_by_id=str(user.id) if hasattr(user, 'id') else str(user.get('id', 'unknown')),
             created_by_name=user.name if hasattr(user, 'name') else user.get('name', 'Unknown User')
         )
@@ -132,7 +135,15 @@ def is_mongodb_available():
 
     except Exception as e:
         # MongoDB is not available, use fallback storage
-        print(f"MongoDB not available for events, using fallback storage: {e}")
+        error_msg = str(e)
+        if "SSL handshake failed" in error_msg:
+            print("MongoDB not available for events (SSL connection issue), using fallback storage")
+        elif "ServerSelectionTimeoutError" in error_msg:
+            print("MongoDB not available for events (connection timeout), using fallback storage")
+        elif "ObjectId" in error_msg:
+            print("MongoDB not available for events (ObjectId validation issue), using fallback storage")
+        else:
+            print(f"MongoDB not available for events, using fallback storage: {error_msg[:100]}...")
         return False
 
 def cleanup_fallback_events():

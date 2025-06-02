@@ -31,16 +31,21 @@ class JWTAuthentication(BaseAuthentication):
             if not user_id:
                 raise AuthenticationFailed('Invalid token payload')
 
-            # Try to find user in MongoDB first
-            try:
-                user = User.objects.get(id=user_id, is_active=True)
-                return (user, token)
-            except User.DoesNotExist:
-                pass
-            except Exception as mongo_error:
-                print(f"MongoDB user lookup failed: {mongo_error}")
+            # Check if user_id is a valid MongoDB ObjectId or UUID
+            from bson import ObjectId
+            is_valid_objectid = ObjectId.is_valid(user_id)
 
-            # If not found in MongoDB, try fallback storage
+            # Try to find user in MongoDB first (only if valid ObjectId)
+            if is_valid_objectid:
+                try:
+                    user = User.objects.get(id=user_id, is_active=True)
+                    return (user, token)
+                except User.DoesNotExist:
+                    pass
+                except Exception as mongo_error:
+                    print(f"MongoDB user lookup failed: {mongo_error}")
+
+            # If not found in MongoDB or invalid ObjectId, try fallback storage
             try:
                 from .fallback_auth import find_user_by_id
                 fallback_user = find_user_by_id(user_id)
