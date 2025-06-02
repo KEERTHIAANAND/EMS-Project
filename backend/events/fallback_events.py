@@ -12,7 +12,7 @@ FALLBACK_EVENTS_FILE = Path(__file__).parent / 'fallback_events.json'
 class FallbackEvent:
     """Simple event class for fallback storage"""
 
-    def __init__(self, name, description, date, time, location, created_by_id, created_by_name, image='', event_id=None):
+    def __init__(self, name, description, date, time, location, created_by_id, created_by_name, image='', max_seats=50, event_id=None):
         self.id = event_id or self._generate_id()
         self.name = name
         self.description = description
@@ -20,6 +20,7 @@ class FallbackEvent:
         self.time = time
         self.location = location
         self.image = image
+        self.max_seats = max_seats
         self.created_by_id = created_by_id
         self.created_by_name = created_by_name
         self.rsvps = []
@@ -31,6 +32,32 @@ class FallbackEvent:
         import uuid
         return str(uuid.uuid4())
 
+    def get_rsvp_count(self):
+        """Get total number of RSVPs"""
+        return len(self.rsvps)
+
+    def get_available_seats(self):
+        """Get number of available seats"""
+        return max(0, self.max_seats - self.get_rsvp_count())
+
+    def is_completed(self):
+        """Check if event is completed (past date)"""
+        try:
+            from datetime import date
+            event_date = date.fromisoformat(self.date)
+            return event_date < date.today()
+        except (ValueError, TypeError):
+            return False
+
+    def get_status(self):
+        """Get event status"""
+        if self.is_completed():
+            return "completed"
+        elif self.get_available_seats() == 0:
+            return "full"
+        else:
+            return "open"
+
     def to_dict(self):
         """Convert to dictionary"""
         return {
@@ -41,7 +68,11 @@ class FallbackEvent:
             'time': self.time,
             'location': self.location,
             'image': self.image,
-            'rsvp_count': len(self.rsvps),
+            'max_seats': self.max_seats,
+            'rsvp_count': self.get_rsvp_count(),
+            'available_seats': self.get_available_seats(),
+            'status': self.get_status(),
+            'is_completed': self.is_completed(),
             'rsvps': self.rsvps,
             'created_by': {
                 'id': self.created_by_id,
@@ -92,7 +123,7 @@ def save_fallback_events(events):
     except Exception as e:
         print(f"Error saving fallback events: {e}")
 
-def create_fallback_event(name, description, date, time, location, image='', user=None):
+def create_fallback_event(name, description, date, time, location, image='', max_seats=50, user=None):
     """Create a new event in fallback storage"""
     try:
         # Create new event
@@ -103,6 +134,7 @@ def create_fallback_event(name, description, date, time, location, image='', use
             time=time,
             location=location,
             image=image,
+            max_seats=max_seats,
             created_by_id=str(user.id) if hasattr(user, 'id') else str(user.get('id', 'unknown')),
             created_by_name=user.name if hasattr(user, 'name') else user.get('name', 'Unknown User')
         )

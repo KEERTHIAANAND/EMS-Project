@@ -85,11 +85,24 @@ def event_list_create(request):
             time = request.data.get('time')
             location = request.data.get('location')
             image = request.data.get('image', '')  # Optional image URL
+            max_seats = request.data.get('max_seats', 50)  # Default 50 seats
 
             # Basic validation
             if not all([name, description, date, time, location]):
                 return Response({
                     'error': 'All fields are required (name, description, date, time, location)'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            # Validate max_seats
+            try:
+                max_seats = int(max_seats)
+                if max_seats <= 0:
+                    return Response({
+                        'error': 'Max seats must be a positive number'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+            except (ValueError, TypeError):
+                return Response({
+                    'error': 'Max seats must be a valid number'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
             # Validate date format (YYYY-MM-DD)
@@ -123,6 +136,7 @@ def event_list_create(request):
                         time=time,
                         location=location,
                         image=image,
+                        max_seats=max_seats,
                         created_by=authenticated_user
                     )
                     mongodb_event.save()
@@ -149,6 +163,7 @@ def event_list_create(request):
                         time=time,
                         location=location,
                         image=image,
+                        max_seats=max_seats,
                         user=authenticated_user
                     )
 

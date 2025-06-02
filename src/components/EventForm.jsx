@@ -24,6 +24,7 @@
       const [eventLocation, setEventLocation] = useState('');
       const [eventDescription, setEventDescription] = useState('');
       const [eventImage, setEventImage] = useState('');
+      const [maxSeats, setMaxSeats] = useState(50);
       const [submitting, setSubmitting] = useState(false);
       const [message, setMessage] = useState({ type: '', text: '' });
 
@@ -37,6 +38,7 @@
             setEventLocation(eventToEdit.location);
             setEventDescription(eventToEdit.description);
             setEventImage(eventToEdit.image || '');
+            setMaxSeats(eventToEdit.max_seats || 50);
           } else {
             toast({
               title: "Error",
@@ -75,6 +77,7 @@
           location: eventLocation,
           description: eventDescription,
           image: eventImage, // Store image URL
+          max_seats: maxSeats,
         };
 
         try {
@@ -191,15 +194,31 @@
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="eventImage" className="text-foreground/90">Image URL (Optional)</Label>
-                  <Input
-                    id="eventImage"
-                    value={eventImage}
-                    onChange={(e) => setEventImage(e.target.value)}
-                    placeholder="e.g., https://example.com/event-image.jpg"
-                    className="bg-background/70"
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="eventImage" className="text-foreground/90">Image URL (Optional)</Label>
+                    <Input
+                      id="eventImage"
+                      value={eventImage}
+                      onChange={(e) => setEventImage(e.target.value)}
+                      placeholder="e.g., https://example.com/event-image.jpg"
+                      className="bg-background/70"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="maxSeats" className="text-foreground/90">Max Seats</Label>
+                    <Input
+                      id="maxSeats"
+                      type="number"
+                      min="1"
+                      max="10000"
+                      value={maxSeats}
+                      onChange={(e) => setMaxSeats(parseInt(e.target.value) || 50)}
+                      placeholder="50"
+                      required
+                      className="bg-background/70"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

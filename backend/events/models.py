@@ -1,8 +1,8 @@
 """
 Event models using MongoEngine
 """
-from mongoengine import Document, StringField, DateTimeField, ReferenceField, ListField, EmbeddedDocument, EmbeddedDocumentField
-from datetime import datetime
+from mongoengine import Document, StringField, DateTimeField, ReferenceField, ListField, EmbeddedDocument, EmbeddedDocumentField, IntField
+from datetime import datetime, date
 from authentication.models import User
 
 
@@ -31,6 +31,7 @@ class Event(Document):
     time = StringField(required=True)  # Store as string in HH:MM format
     location = StringField(required=True, max_length=300)
     image = StringField(max_length=500)  # URL to event image
+    max_seats = IntField(default=50)  # Maximum number of seats available
     created_by = ReferenceField(User, required=True)
     rsvps = ListField(EmbeddedDocumentField(RSVP), default=list)
     created_at = DateTimeField(default=datetime.utcnow)
@@ -53,6 +54,10 @@ class Event(Document):
             if rsvp.email == email:
                 return False, "Email already registered for this event"
 
+        # Check if event is full
+        if self.get_rsvp_count() >= self.max_seats:
+            return False, "Event is full - no more seats available"
+
         new_rsvp = RSVP(name=name, email=email)
         self.rsvps.append(new_rsvp)
         self.save()
@@ -61,6 +66,28 @@ class Event(Document):
     def get_rsvp_count(self):
         """Get total number of RSVPs"""
         return len(self.rsvps)
+
+    def get_available_seats(self):
+        """Get number of available seats"""
+        return max(0, self.max_seats - self.get_rsvp_count())
+
+    def is_completed(self):
+        """Check if event is completed (past date)"""
+        try:
+            from datetime import date
+            event_date = date.fromisoformat(self.date)
+            return event_date < date.today()
+        except (ValueError, TypeError):
+            return False
+
+    def get_status(self):
+        """Get event status"""
+        if self.is_completed():
+            return "completed"
+        elif self.get_available_seats() == 0:
+            return "full"
+        else:
+            return "open"
 
     def to_dict(self, include_creator=True):
         """Convert event to dictionary"""
@@ -72,7 +99,11 @@ class Event(Document):
             'time': self.time,
             'location': self.location,
             'image': self.image,
+            'max_seats': self.max_seats,
             'rsvp_count': self.get_rsvp_count(),
+            'available_seats': self.get_available_seats(),
+            'status': self.get_status(),
+            'is_completed': self.is_completed(),
             'rsvps': [rsvp.to_dict() for rsvp in self.rsvps],
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat()

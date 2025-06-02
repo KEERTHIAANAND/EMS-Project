@@ -106,5 +106,71 @@
     },
     "created_at": "2025-06-02T07:23:31.604523",
     "updated_at": "2025-06-02T07:23:31.604523"
+  },
+  {
+    "id": "d69208f5-ac75-47f0-ba17-e81e22482501",
+    "name": "Future Event - Max Seats Test",
+    "description": "This event tests max seats functionality and should show as 'open' status",
+    "date": "2025-07-02",
+    "time": "18:00",
+    "location": "Future Event Location",
+    "image": "https://example.com/future-event.jpg",
+    "max_seats": 25,
+    "rsvp_count": 0,
+    "available_seats": 25,
+    "status": "open",
+    "is_completed": false,
+    "rsvps": [],
+    "created_by": {
+      "id": "5829786f-25d8-419b-879c-348bb458cf12",
+      "name": "Max Seats Test User",
+      "email": ""
+    },
+    "created_at": "2025-06-02T07:40:07.727738",
+    "updated_at": "2025-06-02T07:40:07.727738"
+  },
+  {
+    "id": "4292faad-7304-4a2d-9bb1-850781894936",
+    "name": "Past Event - Completed Status Test",
+    "description": "This event has a past date and should show as 'completed' in green",
+    "date": "2025-05-26",
+    "time": "15:00",
+    "location": "Past Event Location",
+    "image": "https://example.com/past-event.jpg",
+    "max_seats": 100,
+    "rsvp_count": 0,
+    "available_seats": 100,
+    "status": "completed",
+    "is_completed": true,
+    "rsvps": [],
+    "created_by": {
+      "id": "5829786f-25d8-419b-879c-348bb458cf12",
+      "name": "Max Seats Test User",
+      "email": ""
+    },
+    "created_at": "2025-06-02T07:40:14.857461",
+    "updated_at": "2025-06-02T07:40:14.857461"
+  },
+  {
+    "id": "951f0f63-03ae-4fd0-93e5-9da0c6182f30",
+    "name": "Birthday Special",
+    "description": "Hello!!",
+    "date": "2025-06-05",
+    "time": "01:00",
+    "location": "Coimbatore",
+    "image": "https://media.istockphoto.com/id/1431551851/vector/birthday-cake-vector-background-design-happy-birthday-greeting-text-with-yummy-cake-element.jpg?s=612x612&w=0&k=20&c=T9fLStaaM08x9q0hIFxIURKttIioZun-nQ8KZq-4JTo=",
+    "max_seats": 50,
+    "rsvp_count": 0,
+    "available_seats": 50,
+    "status": "open",
+    "is_completed": false,
+    "rsvps": [],
+    "created_by": {
+      "id": "1f7bb544-b0fb-41d2-a688-1177b25e8d5d",
+      "name": "ms",
+      "email": ""
+    },
+    "created_at": "2025-06-02T07:42:29.225478",
+    "updated_at": "2025-06-02T07:42:29.225478"
   }
 ]
